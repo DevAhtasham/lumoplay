@@ -1,0 +1,71 @@
+:root {
+  /* Colors - Light Theme */
+  --lumoplay-primary: #00a8ff;
+  --lumoplay-secondary: #0097e6;
+  --lumoplay-background: #ffffff;
+  --lumoplay-surface: #f5f5f5;
+  --lumoplay-text: #333333;
+  --lumoplay-text-secondary: #666666;
+  --lumoplay-border: #e0e0e0;
+  --lumoplay-hover: #e8e8e8;
+  --lumoplay-active: #d0d0d0;
+  --lumoplay-disabled: #cccccc;
+  --lumoplay-progress: #00a8ff;
+  --lumoplay-buffer: #e0e0e0;
+  --lumoplay-shadow: rgba(0, 0, 0, 0.1);
+  
+  /* Spacing */
+  --lumoplay-spacing-xs: 4px;
+  --lumoplay-spacing-sm: 8px;
+  --lumoplay-spacing-md: 12px;
+  --lumoplay-spacing-lg: 16px;
+  --lumoplay-spacing-xl: 24px;
+  
+  /* Border Radius */
+  --lumoplay-radius-sm: 2px;
+  --lumoplay-radius-md: 4px;
+  --lumoplay-radius-lg: 8px;
+  --lumoplay-radius-full: 9999px;
+  
+  /* Transitions */
+  --lumoplay-transition-fast: 150ms ease-out;
+  --lumoplay-transition-normal: 250ms ease-out;
+  --lumoplay-transition-slow: 350ms ease-out;
+  
+  /* Z-Index */
+  --lumoplay-z-base: 1;
+  --lumoplay-z-controls: 10;
+  --lumoplay-z-overlay: 20;
+  --lumoplay-z-tooltip: 30;
+  
+  /* Control Bar */
+  --lumoplay-control-height: 40px;
+  --lumoplay-control-padding: 8px;
+  --lumoplay-control-gap: 8px;
+  
+  /* Progress Bar */
+  --lumoplay-progress-height: 4px;
+  --lumoplay-progress-hover-height: 6px;
+  
+  /* Icons */
+  --lumoplay-icon-size: 20px;
+  --lumoplay-icon-sm: 16px;
+  --lumoplay-icon-lg: 24px;
+}
+
+[data-theme='dark'] {
+  /* Colors - Dark Theme */
+  --lumoplay-primary: #00a8ff;
+  --lumoplay-secondary: #0097e6;
+  --lumoplay-background: #1a1a1a;
+  --lumoplay-surface: #2a2a2a;
+  --lumoplay-text: #ffffff;
+  --lumoplay-text-secondary: #b3b3b3;
+  --lumoplay-border: #404040;
+  --lumoplay-hover: #3a3a3a;
+  --lumoplay-active: #4a4a4a;
+  --lumoplay-disabled: #555555;
+  --lumoplay-progress: #00a8ff;
+  --lumoplay-buffer: #404040;
+  --lumoplay-shadow: rgba(0, 0, 0, 0.3);
+}

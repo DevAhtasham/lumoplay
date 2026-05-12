@@ -1,0 +1,55 @@
+{
+  "name": "lumoplay",
+  "version": "0.1.0",
+  "description": "Lightweight, plugin-based modern web video player with advanced UX and full customization for developers",
+  "type": "module",
+  "main": "./build/umd/lumoplay.js",
+  "module": "./build/esm/lumoplay.js",
+  "types": "./build/esm/lumoplay.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/esm/lumoplay.js",
+      "require": "./build/umd/lumoplay.js",
+      "types": "./build/esm/lumoplay.d.ts"
+    },
+    "./styles": "./build/esm/styles.css"
+  },
+  "files": [
+    "build",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:types": "tsc --emitDeclarationOnly",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src --ext .ts,.tsx",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": [
+    "video",
+    "player",
+    "html5",
+    "plugin",
+    "lightweight",
+    "typescript",
+    "modern"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vitest": "^1.2.1"
+  },
+  "sideEffects": false
+}
