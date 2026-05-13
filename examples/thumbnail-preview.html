@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LumoPlay - Thumbnail Preview Demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 40px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin-bottom: 24px;
+      color: #333;
+    }
+
+    .demo-section {
+      margin-bottom: 40px;
+      padding: 24px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .demo-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #333;
+    }
+
+    .demo-description {
+      margin-bottom: 16px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .player-wrapper {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .controls {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      background: var(--lumoplay-primary, #007bff);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s ease;
+    }
+
+    .btn:hover {
+      background: var(--lumoplay-primary-hover, #0056b3);
+    }
+
+    .btn.secondary {
+      background: #6c757d;
+    }
+
+    .btn.secondary:hover {
+      background: #545b62;
+    }
+
+    .info {
+      margin-top: 16px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #495057;
+    }
+
+    .log {
+      margin-top: 16px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+  <link rel="stylesheet" href="../src/styles/variables.css">
+  <link rel="stylesheet" href="../src/styles/base.css">
+  <link rel="stylesheet" href="../src/styles/controls.css">
+  <link rel="stylesheet" href="../src/styles/overlay.css">
+  <link rel="stylesheet" href="../src/styles/themes.css">
+</head>
+<body>
+  <div class="container">
+    <h1>LumoPlay - Thumbnail Preview Demo</h1>
+    
+    <!-- System Status -->
+    <div class="demo-section">
+      <div class="demo-title">System Status</div>
+      <div class="demo-description">
+        Real-time video frame capture status. Shows when video loads and frames are captured.
+      </div>
+      <div id="log-system" class="log"></div>
+    </div>
+
+    <!-- WebVTT Thumbnails Demo -->
+    <div class="demo-section">
+      <h2 class="demo-title">WebVTT Thumbnails</h2>
+      <p class="demo-description">
+        Hover over the progress bar to see thumbnail previews. This demo uses WebVTT format with sprite sheet coordinates.
+      </p>
+      
+      <div class="player-wrapper">
+        <div id="player-webvtt" class="lumoplay"></div>
+      </div>
+      
+      <div class="controls">
+        <button class="btn" onclick="toggleWebVTT()">Toggle Thumbnails</button>
+        <button class="btn secondary" onclick="clearCacheWebVTT()">Clear Cache</button>
+        <button class="btn secondary" onclick="showStatsWebVTT()">Show Stats</button>
+      </div>
+      
+      <div class="config-info">
+        <strong>Video Info:</strong>
+        <ul style="margin: 8px 0; padding-left: 20px;">
+          <li>Title: Local trailer.webm</li>
+          <li>Source: Local file (no CORS issues)</li>
+          <li>Thumbnails: Real-time frame capture</li>
+          <li>Format: Canvas-based extraction</li>
+        </ul>
+      </div>
+      
+      <div id="log-webvtt" class="log"></div>
+    </div>
+
+    <!-- Sprite Thumbnails Demo -->
+    <div class="demo-section">
+      <h2 class="demo-title">Sprite Sheet Thumbnails</h2>
+      <p class="demo-description">
+        This demo shows sprite sheet configuration without WebVTT file. Thumbnails are generated automatically from sprite sheet metadata.
+      </p>
+      
+      <div class="player-wrapper">
+        <div id="player-sprite" class="lumoplay"></div>
+      </div>
+      
+      <div class="controls">
+        <button class="btn" onclick="toggleSprite()">Toggle Thumbnails</button>
+        <button class="btn secondary" onclick="clearCacheSprite()">Clear Cache</button>
+        <button class="btn secondary" onclick="showStatsSprite()">Show Stats</button>
+      </div>
+      
+      <div class="info">
+        <strong>Video Info:</strong><br>
+        • Title: Local trailer.webm<br>
+        • Source: Local file (no CORS issues)<br>
+        • Thumbnails: Real-time frame capture<br>
+        • Format: Canvas-based extraction
+      </div>
+      
+      <div id="log-sprite" class="log"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { LumoPlayer } from '../src/index.ts';
+
+    /**
+     * VideoFrameCapture - captures actual frames from the video source
+     * Uses a hidden <video> + <canvas> to extract real frame images
+     */
+    class VideoFrameCapture {
+      constructor(videoSrc, interval = 2) {
+        this.interval = interval;
+        this.frameCache = new Map(); // time -> dataURL
+        this.pendingCaptures = new Set();
+
+        // Hidden video element for frame extraction
+        this.video = document.createElement('video');
+        this.video.src = videoSrc;
+        this.video.crossOrigin = 'anonymous';
+        this.video.muted = true;
+        this.video.preload = 'metadata';
+        this.video.style.cssText = 'position:absolute;visibility:hidden;width:1px;height:1px;';
+        document.body.appendChild(this.video);
+
+        // Canvas for drawing frames
+        this.canvas = document.createElement('canvas');
+        this.canvas.width = 160;
+        this.canvas.height = 90;
+        this.ctx = this.canvas.getContext('2d');
+
+        this.ready = false;
+        this.capturing = false;
+
+        this.video.addEventListener('loadedmetadata', () => {
+          this.ready = true;
+          this.duration = this.video.duration;
+          // Start background pre-capture of all frames
+          this.precaptureAll();
+        });
+      }
+
+      // Capture a single frame at a given time, returns a Promise<dataURL>
+      captureAt(time) {
+        // Round to nearest interval bucket
+        const bucket = Math.round(time / this.interval) * this.interval;
+        const key = bucket.toFixed(1);
+
+        if (this.frameCache.has(key)) {
+          return Promise.resolve(this.frameCache.get(key));
+        }
+
+        if (this.pendingCaptures.has(key)) {
+          // Already being captured - wait for it
+          return new Promise(resolve => {
+            const check = setInterval(() => {
+              if (this.frameCache.has(key)) {
+                clearInterval(check);
+                resolve(this.frameCache.get(key));
+              }
+            }, 50);
+          });
+        }
+
+        return this._captureFrame(key, bucket);
+      }
+
+      _captureFrame(key, time) {
+        this.pendingCaptures.add(key);
+        return new Promise((resolve) => {
+          const clampedTime = Math.max(0, Math.min(time, this.duration || 9999));
+          this.video.currentTime = clampedTime;
+
+          const onSeeked = () => {
+            this.video.removeEventListener('seeked', onSeeked);
+            try {
+              this.ctx.drawImage(this.video, 0, 0, 160, 90);
+              const dataUrl = this.canvas.toDataURL('image/jpeg', 0.7);
+              this.frameCache.set(key, dataUrl);
+            } catch (e) {
+              // CORS or other issue - store empty string to avoid retrying
+              this.frameCache.set(key, null);
+            }
+            this.pendingCaptures.delete(key);
+            resolve(this.frameCache.get(key));
+          };
+          this.video.addEventListener('seeked', onSeeked, { once: true });
+        });
+      }
+
+      // Sequentially capture all frames in background after metadata loads
+      async precaptureAll() {
+        if (!this.ready || this.capturing) return;
+        this.capturing = true;
+        const totalFrames = Math.ceil(this.duration / this.interval);
+        for (let i = 0; i <= totalFrames; i++) {
+          const t = i * this.interval;
+          const key = t.toFixed(1);
+          if (!this.frameCache.has(key)) {
+            await this._captureFrame(key, t);
+          }
+        }
+        this.capturing = false;
+        console.log(`[LumoPlay] Captured ${this.frameCache.size} thumbnail frames`);
+      }
+
+      destroy() {
+        this.video.remove();
+        this.frameCache.clear();
+      }
+    }
+
+    // Shared frame capture instance (one hidden video for frame extraction
+    // Using local trailer.webm file for real-time frame preview
+    let frameCapture = null;
+    const VIDEO_SOURCES = [
+      '../trailer.webm'
+    ];
+    const VIDEO_SRC = VIDEO_SOURCES[0];
+
+    let currentVideoIndex = 0;
+
+    function initFrameCapture() {
+      const src = VIDEO_SOURCES[currentVideoIndex];
+      frameCapture = new VideoFrameCapture(src, 2);
+      
+      // Log any errors and retry with next source
+      frameCapture.video.onerror = () => {
+        log('system', `❌ Video load error (source ${currentVideoIndex + 1}/${VIDEO_SOURCES.length}): ${frameCapture.video.error?.message || 'Unknown'}`);
+        
+        // Try next video source
+        currentVideoIndex++;
+        if (currentVideoIndex < VIDEO_SOURCES.length) {
+          log('system', `🔄 Retrying with alternative source...`);
+          frameCapture.destroy();
+          setTimeout(initFrameCapture, 500);
+        } else {
+          log('system', `❌ All video sources failed. Please check your internet connection.`);
+        }
+      };
+      
+      frameCapture.video.onloadedmetadata = () => {
+        log('system', `✅ Video loaded from source ${currentVideoIndex + 1}, duration: ${frameCapture.video.duration.toFixed(1)}s`);
+      };
+    }
+
+    // Get the real frame URL for a given time
+    async function getThumbnailUrl(time) {
+      if (!frameCapture) return null;
+      return await frameCapture.captureAt(time);
+    }
+
+    // WebVTT Thumbnail Demo
+    let webvttPlayer = null;
+    let webvttEnabled = true;
+
+    function initWebVTT() {
+      webvttPlayer = new LumoPlayer('#player-webvtt', {
+        src: VIDEO_SRC,
+        poster: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg',
+        autoplay: false,
+        muted: false,
+        controls: true,
+        theme: 'dark',
+        autoHideDelay: 3000,
+      });
+
+      const progressBar = webvttPlayer.getProgressBar();
+      if (!progressBar) {
+        log('webvtt', '❌ Could not get progress bar');
+        return;
+      }
+
+      progressBar.enableThumbnails();
+      log('webvtt', '✅ Thumbnails enabled');
+
+      webvttPlayer.on('play', () => log('webvtt', '▶️ Playing'));
+      webvttPlayer.on('pause', () => log('webvtt', '⏸️ Paused'));
+
+      // Listen on the progress bar element directly (bubbles:true ensures it reaches here)
+      progressBar.getElement().addEventListener('thumbnailRequest', async (e) => {
+        const { time, x, y } = e.detail;
+        log('webvtt', `🖼️ Frame at ${time.toFixed(1)}s`);
+
+        const thumbnailUrl = await getThumbnailUrl(time);
+        if (thumbnailUrl) {
+          progressBar.showThumbnailPreview(thumbnailUrl, { x, y });
+        }
+      });
+    }
+
+    // Sprite Thumbnail Demo
+    let spritePlayer = null;
+    let spriteEnabled = true;
+
+    function initSprite() {
+      spritePlayer = new LumoPlayer('#player-sprite', {
+        src: VIDEO_SRC,
+        poster: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/images/BigBuckBunny.jpg',
+        autoplay: false,
+        muted: false,
+        controls: true,
+        theme: 'dark',
+        autoHideDelay: 3000,
+      });
+
+      const progressBar = spritePlayer.getProgressBar();
+      if (!progressBar) {
+        log('sprite', '❌ Could not get progress bar');
+        return;
+      }
+
+      progressBar.enableThumbnails();
+      log('sprite', '✅ Thumbnails enabled');
+
+      spritePlayer.on('play', () => log('sprite', '▶️ Playing'));
+      spritePlayer.on('pause', () => log('sprite', '⏸️ Paused'));
+
+      progressBar.getElement().addEventListener('thumbnailRequest', async (e) => {
+        const { time, x, y } = e.detail;
+        log('sprite', `🖼️ Frame at ${time.toFixed(1)}s`);
+
+        const thumbnailUrl = await getThumbnailUrl(time);
+        if (thumbnailUrl) {
+          progressBar.showThumbnailPreview(thumbnailUrl, { x, y });
+        }
+      });
+    }
+
+    // Control functions
+    window.toggleWebVTT = function() {
+      const progressBar = webvttPlayer?.getProgressBar();
+      if (progressBar) {
+        if (webvttEnabled) {
+          progressBar.disableThumbnails();
+          webvttEnabled = false;
+          log('webvtt', '🔇 WebVTT thumbnails disabled');
+        } else {
+          progressBar.enableThumbnails();
+          webvttEnabled = true;
+          log('webvtt', '🔊 WebVTT thumbnails enabled');
+        }
+      }
+    };
+
+    window.toggleSprite = function() {
+      const progressBar = spritePlayer?.getProgressBar();
+      if (progressBar) {
+        if (spriteEnabled) {
+          progressBar.disableThumbnails();
+          spriteEnabled = false;
+          log('sprite', '🔇 Sprite thumbnails disabled');
+        } else {
+          progressBar.enableThumbnails();
+          spriteEnabled = true;
+          log('sprite', '🔊 Sprite thumbnails enabled');
+        }
+      }
+    };
+
+    window.clearCacheWebVTT = function() {
+      log('webvtt', '🗑️ WebVTT cache cleared (placeholder)');
+    };
+
+    window.clearCacheSprite = function() {
+      log('sprite', '🗑️ Sprite cache cleared (placeholder)');
+    };
+
+    window.showStatsWebVTT = function() {
+      log('webvtt', '📊 Cache stats: Not implemented yet');
+    };
+
+    window.showStatsSprite = function() {
+      log('sprite', '📊 Cache stats: Not implemented yet');
+    };
+
+    function log(type, message) {
+      const logElement = document.getElementById(`log-${type}`);
+      if (logElement) {
+        const timestamp = new Date().toLocaleTimeString();
+        logElement.textContent += `[${timestamp}] ${message}\n`;
+        logElement.scrollTop = logElement.scrollHeight;
+      }
+    }
+
+    // Initialize both demos
+    initFrameCapture(); // Start capturing real frames in background
+    initWebVTT();
+    initSprite();
+  </script>
+</body>
+</html>
