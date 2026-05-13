@@ -19,10 +19,3 @@ export { formatTime, parseTime } from './utils/format-time';
 export { debounce, throttle } from './utils/debounce';
 export { Storage, savePlaybackPosition, getPlaybackPosition, saveVolume, getVolume } from './utils/storage';
 export { createElement, removeElement, insertAfter, isFullscreen, requestFullscreen, exitFullscreen, supportsPiP, isPiP } from './utils/dom';
-
-// CSS
-import './styles/variables.css';
-import './styles/base.css';
-import './styles/controls.css';
-import './styles/overlay.css';
-import './styles/themes.css';

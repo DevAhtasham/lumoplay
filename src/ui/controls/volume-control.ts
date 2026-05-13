@@ -2,8 +2,10 @@ import { createElement } from '../../utils/dom';
 
 export class VolumeControl {
   private container: HTMLElement;
+  private unifiedWrapper: HTMLElement;
   private button: HTMLButtonElement;
   private slider: HTMLInputElement;
+  private verticalSlider: HTMLInputElement;
   private isMuted: boolean = false;
   private volume: number = 1;
 
@@ -12,17 +14,41 @@ export class VolumeControl {
     onVolumeChange: (volume: number) => void
   ) {
     this.container = createElement('div', ['lumoplay-volume']);
-    
+
+    // Unified wrapper that contains both vertical slider and icon
+    this.unifiedWrapper = createElement('div', ['lumoplay-volume-wrapper']);
+
+    // Vertical slider container
+    const verticalContainer = createElement('div', ['lumoplay-volume-vertical']);
+    this.verticalSlider = createElement<HTMLInputElement>('input');
+    this.verticalSlider.type = 'range';
+    this.verticalSlider.min = '0';
+    this.verticalSlider.max = '1';
+    this.verticalSlider.step = '0.01';
+    this.verticalSlider.value = '1';
+    this.verticalSlider.setAttribute('aria-label', 'Volume');
+    this.verticalSlider.addEventListener('input', (e) => {
+      const volume = parseFloat((e.target as HTMLInputElement).value);
+      this.volume = volume;
+      this.isMuted = volume === 0;
+      this.slider.value = volume.toString();
+      this.updateButton();
+      this.updateSliderFill();
+      this.updateVerticalSliderFill();
+      onVolumeChange(volume);
+    });
+    verticalContainer.appendChild(this.verticalSlider);
+
     this.button = createElement<HTMLButtonElement>('button', ['lumoplay-control', 'lumoplay-mute']);
     this.button.innerHTML = this.getVolumeIcon();
     this.button.setAttribute('aria-label', 'Mute');
     this.button.addEventListener('click', onMuteToggle);
-    
+
     this.slider = createElement<HTMLInputElement>('input', ['lumoplay-volume-slider']);
     this.slider.type = 'range';
     this.slider.min = '0';
     this.slider.max = '1';
-    this.slider.step = '0.1';
+    this.slider.step = '0.01';
     this.slider.value = '1';
     this.slider.setAttribute('aria-label', 'Volume');
     this.slider.addEventListener('input', (e) => {
@@ -30,11 +56,20 @@ export class VolumeControl {
       this.volume = volume;
       this.isMuted = volume === 0;
       this.updateButton();
+      this.updateSliderFill();
+      this.verticalSlider.value = volume.toString();
+      this.updateVerticalSliderFill();
       onVolumeChange(volume);
     });
 
-    this.container.appendChild(this.button);
+    // Build unified structure: vertical slider on top, icon at bottom
+    this.unifiedWrapper.appendChild(verticalContainer);
+    this.unifiedWrapper.appendChild(this.button);
+    this.container.appendChild(this.unifiedWrapper);
     this.container.appendChild(this.slider);
+
+    this.updateSliderFill();
+    this.updateVerticalSliderFill();
   }
 
   private getVolumeIcon(): string {
@@ -63,19 +98,39 @@ export class VolumeControl {
     this.button.setAttribute('aria-label', this.isMuted ? 'Unmute' : 'Mute');
   }
 
+  private updateSliderFill(): void {
+    const percentage = this.volume * 100;
+    this.slider.style.background = `linear-gradient(to right, var(--lumoplay-primary) ${percentage}%, var(--lumoplay-buffer) ${percentage}%)`;
+  }
+
+  private updateVerticalSliderFill(): void {
+    const percentage = (1 - this.volume) * 100;
+    this.verticalSlider.style.background = `linear-gradient(to right, var(--lumoplay-primary) ${100 - percentage}%, var(--lumoplay-buffer) ${100 - percentage}%)`;
+    this.verticalSlider.style.borderRadius = '9999px';
+  }
+
   setVolume(volume: number): void {
     this.volume = volume;
     this.slider.value = volume.toString();
+    this.verticalSlider.value = volume.toString();
     this.isMuted = volume === 0;
     this.updateButton();
+    this.updateSliderFill();
+    this.updateVerticalSliderFill();
   }
 
   setMuted(muted: boolean): void {
     this.isMuted = muted;
     if (muted) {
       this.slider.value = '0';
+      this.verticalSlider.value = '0';
+      this.updateSliderFill();
+      this.updateVerticalSliderFill();
     } else {
       this.slider.value = this.volume.toString();
+      this.verticalSlider.value = this.volume.toString();
+      this.updateSliderFill();
+      this.updateVerticalSliderFill();
     }
     this.updateButton();
   }

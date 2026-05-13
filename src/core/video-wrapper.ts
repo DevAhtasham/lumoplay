@@ -109,6 +109,30 @@ export class VideoWrapper {
     this.videoElement.poster = poster;
   }
 
+  getAudioTracks(): any[] {
+    const videoElement = this.videoElement as any;
+    if (videoElement.audioTracks) {
+      return Array.from(videoElement.audioTracks).map((track: any) => ({
+        id: track.id,
+        label: track.label,
+        language: track.language,
+        enabled: track.enabled,
+        kind: track.kind,
+      }));
+    }
+    return [];
+  }
+
+  setAudioTrack(trackId: string): void {
+    const videoElement = this.videoElement as any;
+    if (videoElement.audioTracks) {
+      for (let i = 0; i < videoElement.audioTracks.length; i++) {
+        const track = videoElement.audioTracks[i];
+        track.enabled = (track.id === trackId);
+      }
+    }
+  }
+
   destroy(): void {
     this.eventListeners.forEach((listener, event) => {
       this.videoElement.removeEventListener(event, listener);

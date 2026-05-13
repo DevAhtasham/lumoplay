@@ -10,6 +10,7 @@ export interface PlayerState {
   isFullscreen: boolean;
   isPiP: boolean;
   isTheatrical: boolean;
+  isMiniPlayer: boolean;
   buffered: TimeRanges;
 }
 

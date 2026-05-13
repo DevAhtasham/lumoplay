@@ -22,12 +22,7 @@ export default defineConfig({
     outDir: 'build',
     emptyOutDir: true,
     sourcemap: true,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: false
-      }
-    }
+    minify: false
   },
   resolve: {
     alias: {
