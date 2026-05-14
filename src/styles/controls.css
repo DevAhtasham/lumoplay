@@ -250,6 +250,7 @@
 
 .lumoplay-control:hover {
   background: var(--lumoplay-hover);
+  color: #000;
   transform: scale(1.05);
 }
 
@@ -565,6 +566,18 @@
 
 .lumoplay-speed-option:hover {
   background: var(--lumoplay-hover);
+}
+
+/* PiP Button */
+.lumoplay-pip-button {
+  display: flex;
+  align-items: center;
+}
+
+.lumoplay-pip-toggle svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
 }
 
 .lumoplay-speed-option.lumoplay-active {

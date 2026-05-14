@@ -3,7 +3,9 @@ import { VolumeControl } from './controls/volume-control';
 import { ProgressBar } from './controls/progress-bar';
 import { FullscreenButton } from './controls/fullscreen-button';
 import { TimeDisplay } from './controls/time-display';
+import { PipButton } from './controls/pip-button';
 import { ThemeManager } from './theme-manager';
+import { CenterPlayButton } from './overlay';
 import { createElement } from '../utils/dom';
 
 export class SeekButtons {
@@ -45,38 +47,23 @@ export class SeekButtons {
   }
 }
 
-export class SpeedControl {
+export class SettingsButton {
   private container: HTMLElement;
   private button: HTMLButtonElement;
-  private speeds: number[] = [0.5, 0.75, 1, 1.25, 1.5, 2];
-  private currentSpeedIndex: number = 2; // Default to 1x
-  private onSpeedChange: (speed: number) => void;
 
-  constructor(onSpeedChange: (speed: number) => void) {
-    this.onSpeedChange = onSpeedChange;
-    this.container = createElement('div', ['lumoplay-speed-control']);
+  constructor(onSettingsClick: () => void) {
+    this.container = createElement('div', ['lumoplay-settings-button']);
     
-    this.button = createElement<HTMLButtonElement>('button', ['lumoplay-control', 'lumoplay-speed']);
-    this.button.innerHTML = '1x';
-    this.button.setAttribute('aria-label', 'Playback speed');
-    this.button.addEventListener('click', () => this.cycleSpeed());
+    this.button = createElement<HTMLButtonElement>('button', ['lumoplay-control', 'lumoplay-settings-toggle']);
+    this.button.innerHTML = `
+      <svg viewBox="0 0 24 24">
+        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.04.17 0 .36.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.04-.22 0-.45-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+      </svg>
+    `;
+    this.button.setAttribute('aria-label', 'Settings');
+    this.button.addEventListener('click', onSettingsClick);
     
     this.container.appendChild(this.button);
-  }
-
-  private cycleSpeed(): void {
-    this.currentSpeedIndex = (this.currentSpeedIndex + 1) % this.speeds.length;
-    const speed = this.speeds[this.currentSpeedIndex];
-    this.button.textContent = speed + 'x';
-    this.onSpeedChange(speed);
-  }
-
-  setSpeed(speed: number): void {
-    const index = this.speeds.indexOf(speed);
-    if (index !== -1) {
-      this.currentSpeedIndex = index;
-      this.button.textContent = speed + 'x';
-    }
   }
 
   getElement(): HTMLElement {
@@ -150,82 +137,6 @@ export class AudioTrackControl {
   }
 }
 
-export class TheaterModeButton {
-  private container: HTMLElement;
-  private button: HTMLButtonElement;
-
-  constructor(onToggle: () => void) {
-    this.container = createElement('div', ['lumoplay-theater-button']);
-    
-    this.button = createElement<HTMLButtonElement>('button', ['lumoplay-control', 'lumoplay-theater-toggle']);
-    this.button.innerHTML = `
-      <svg viewBox="0 0 24 24">
-        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
-      </svg>
-    `;
-    this.button.setAttribute('aria-label', 'Theater mode');
-    this.button.addEventListener('click', onToggle);
-    
-    this.container.appendChild(this.button);
-  }
-
-  updateTheaterMode(isTheatrical: boolean): void {
-    if (isTheatrical) {
-      this.button.classList.add('active');
-      this.button.setAttribute('aria-label', 'Exit theater mode');
-    } else {
-      this.button.classList.remove('active');
-      this.button.setAttribute('aria-label', 'Theater mode');
-    }
-  }
-
-  getElement(): HTMLElement {
-    return this.container;
-  }
-
-  destroy(): void {
-    this.container.remove();
-  }
-}
-
-export class MiniPlayerButton {
-  private container: HTMLElement;
-  private button: HTMLButtonElement;
-
-  constructor(onToggle: () => void) {
-    this.container = createElement('div', ['lumoplay-mini-button']);
-    
-    this.button = createElement<HTMLButtonElement>('button', ['lumoplay-control', 'lumoplay-mini-toggle']);
-    this.button.innerHTML = `
-      <svg viewBox="0 0 24 24">
-        <path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/>
-      </svg>
-    `;
-    this.button.setAttribute('aria-label', 'Mini player');
-    this.button.addEventListener('click', onToggle);
-    
-    this.container.appendChild(this.button);
-  }
-
-  updateMiniMode(isMini: boolean): void {
-    if (isMini) {
-      this.button.classList.add('active');
-      this.button.setAttribute('aria-label', 'Exit mini player');
-    } else {
-      this.button.classList.remove('active');
-      this.button.setAttribute('aria-label', 'Mini player');
-    }
-  }
-
-  getElement(): HTMLElement {
-    return this.container;
-  }
-
-  destroy(): void {
-    this.container.remove();
-  }
-}
-
 export class Renderer {
   private container: HTMLElement;
   private controlsContainer: HTMLElement;
@@ -235,10 +146,11 @@ export class Renderer {
   private fullscreenButton: FullscreenButton;
   private timeDisplay: TimeDisplay;
   private seekButtons: SeekButtons;
-  private speedControl: SpeedControl;
-  private theaterModeButton: TheaterModeButton;
-  private miniPlayerButton: MiniPlayerButton;
+  private settingsButton: SettingsButton;
+  private pipButton: PipButton;
+  private centerPlayButton: CenterPlayButton;
   private themeManager: ThemeManager;
+  private player: any;
   private hideTimeout: ReturnType<typeof setTimeout> | null = null;
   private autoHideDelay: number;
 
@@ -248,6 +160,7 @@ export class Renderer {
     options: { autoHideDelay?: number } = {}
   ) {
     this.container = container;
+    this.player = player;
     this.autoHideDelay = options.autoHideDelay || 3000;
     
     this.themeManager = new ThemeManager(container);
@@ -272,18 +185,51 @@ export class Renderer {
       () => player.rewind(10),
       () => player.forward(10)
     );
-    this.speedControl = new SpeedControl((speed) => player.setSpeed(speed));
-    this.theaterModeButton = new TheaterModeButton(() => player.toggleTheaterMode());
-    this.miniPlayerButton = new MiniPlayerButton(() => player.toggleMiniPlayer());
+    this.settingsButton = new SettingsButton(() => {
+      console.log('Settings clicked');
+    });
+    this.pipButton = new PipButton(() => {
+      player.togglePiP().catch(console.error);
+    });
+    this.centerPlayButton = new CenterPlayButton(container, () => {
+      if (player.isPlaying()) {
+        player.pause();
+      } else {
+        player.play();
+      }
+    });
+
+    // Listen to play/pause events to update center button state
+    player.on('play', () => {
+      this.centerPlayButton.updateState(true);
+    });
+    player.on('pause', () => {
+      this.centerPlayButton.updateState(false);
+      // Show controls when paused
+      this.controlsContainer.classList.remove('lumoplay-hidden');
+      if (this.hideTimeout) {
+        clearTimeout(this.hideTimeout);
+      }
+    });
+
+    // Add click handler on container to toggle play/pause
+    container.addEventListener('click', (e) => {
+      if (e.target && !(e.target as HTMLElement).closest('.lumoplay-controls') && !(e.target as HTMLElement).closest('.lumoplay-center-play-button')) {
+        if (player.isPlaying()) {
+          player.pause();
+        } else {
+          player.play();
+        }
+      }
+    });
 
     this.controlsContainer.appendChild(this.playButton.getElement());
     this.controlsContainer.appendChild(this.seekButtons.getElement());
     this.controlsContainer.appendChild(this.volumeControl.getElement());
     this.controlsContainer.appendChild(this.progressBar.getElement());
     this.controlsContainer.appendChild(this.timeDisplay.getElement());
-    this.controlsContainer.appendChild(this.speedControl.getElement());
-    this.controlsContainer.appendChild(this.theaterModeButton.getElement());
-    this.controlsContainer.appendChild(this.miniPlayerButton.getElement());
+    this.controlsContainer.appendChild(this.settingsButton.getElement());
+    this.controlsContainer.appendChild(this.pipButton.getElement());
     this.controlsContainer.appendChild(this.fullscreenButton.getElement());
 
     container.appendChild(this.controlsContainer);
@@ -297,13 +243,18 @@ export class Renderer {
       if (this.hideTimeout) {
         clearTimeout(this.hideTimeout);
       }
-      this.hideTimeout = setTimeout(() => {
-        this.hideControls();
-      }, this.autoHideDelay);
+      // Only auto-hide if video is playing
+      if (this.player && this.player.isPlaying()) {
+        this.hideTimeout = setTimeout(() => {
+          this.hideControls();
+        }, this.autoHideDelay);
+      }
     };
 
     const hideControls = () => {
-      this.hideControls();
+      if (this.player && this.player.isPlaying()) {
+        this.hideControls();
+      }
     };
 
     this.container.addEventListener('mousemove', showControls);

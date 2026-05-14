@@ -95,6 +95,38 @@ export class LumoPlayer implements PlayerAPI {
   }
 
   private setupEventListeners(): void {
+    // Native PiP event listeners
+    this.videoElement.addEventListener('enterpictureinpicture', () => {
+      this.stateManager.setState({ isPiP: true });
+      this.emitter.emit('pip');
+      this.eventHooks.execute('pip');
+      this.savePiPState(true);
+    });
+
+    this.videoElement.addEventListener('leavepictureinpicture', () => {
+      this.stateManager.setState({ isPiP: false });
+      this.emitter.emit('exitpip');
+      this.eventHooks.execute('exitpip');
+      this.savePiPState(false);
+    });
+
+    // Page visibility API for tab switching - keep video playing if PiP is active
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        // Tab is being hidden, if PiP is active ensure video keeps playing
+        if (isPiP() && this.videoElement.paused) {
+          this.videoElement.play().catch(e => console.error('Failed to play video on tab hide:', e));
+        }
+      } else {
+        // Tab became visible again, sync PiP state
+        const pipActive = isPiP();
+        const currentState = this.stateManager.getState();
+        if (currentState.isPiP !== pipActive) {
+          this.stateManager.setState({ isPiP: pipActive });
+        }
+      }
+    });
+
     this.emitter.on('play', () => {
       this.stateManager.setState({ isPlaying: true });
       this.renderer.updatePlayState(true);
@@ -248,6 +280,71 @@ export class LumoPlayer implements PlayerAPI {
     }
   }
 
+  private savePlaybackPosition(): void {
+    if (this.options.persistPosition) {
+      savePlaybackPosition(this.videoId, this.getCurrentTime());
+    }
+  }
+
+  private savePiPState(isPiP: boolean): void {
+    try {
+      localStorage.setItem(`lumoplay_pip_${this.videoId}`, isPiP ? 'true' : 'false');
+    } catch (e) {
+      console.warn('Failed to save PiP state:', e);
+    }
+  }
+
+  private restorePiPState(): void {
+    try {
+      const savedPiP = localStorage.getItem(`lumoplay_pip_${this.videoId}`);
+      if (savedPiP === 'true' && !isPiP()) {
+        // Wait for video to be ready before entering PiP
+        const attemptPiP = async () => {
+          // Some browsers require video to be playing or have loaded metadata
+          if (this.videoElement.readyState >= 1) {
+            // Ensure video is unmuted (some browsers require this for PiP)
+            if (this.videoElement.muted) {
+              this.videoElement.muted = false;
+            }
+            // Ensure video is playing before PiP (some browsers require this)
+            if (this.videoElement.paused) {
+              try {
+                await this.videoElement.play();
+                // Small delay to ensure play started
+                await new Promise(resolve => setTimeout(resolve, 100));
+              } catch (e) {
+                // If play fails due to autoplay policy, try muted play
+                if ((e as Error).name === 'NotAllowedError') {
+                  this.videoElement.muted = true;
+                  await this.videoElement.play().catch(err => {
+                    console.error('Muted play also failed:', err);
+                  });
+                }
+              }
+            }
+            this.enterPiP().catch(() => {
+              // If PiP fails, clear the saved state
+              this.savePiPState(false);
+            });
+          }
+        };
+
+        if (this.videoElement.readyState >= 1) {
+          attemptPiP();
+        } else {
+          // Video not ready yet, wait for loadedmetadata event
+          const onLoadedMetadata = () => {
+            attemptPiP();
+            this.videoElement.removeEventListener('loadedmetadata', onLoadedMetadata);
+          };
+          this.videoElement.addEventListener('loadedmetadata', onLoadedMetadata);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to restore PiP state:', e);
+    }
+  }
+
   private loadPersistedData(): void {
     if (this.options.persistVolume) {
       const savedVolume = getVolume();
@@ -262,12 +359,9 @@ export class LumoPlayer implements PlayerAPI {
         this.seek(savedPosition);
       }
     }
-  }
 
-  private savePlaybackPosition(): void {
-    if (this.options.persistPosition) {
-      savePlaybackPosition(this.videoId, this.getCurrentTime());
-    }
+    // Restore PiP state if saved
+    this.restorePiPState();
   }
 
   // Public API
@@ -432,18 +526,22 @@ export class LumoPlayer implements PlayerAPI {
   async enterPiP(): Promise<void> {
     if (!isPiP()) {
       await this.videoElement.requestPictureInPicture();
-      this.stateManager.setState({ isPiP: true });
-      this.emitter.emit('pip');
-      this.eventHooks.execute('pip');
+      // State will be updated by enterpictureinpicture event listener
     }
   }
 
   async exitPiP(): Promise<void> {
     if (isPiP()) {
       await document.exitPictureInPicture();
-      this.stateManager.setState({ isPiP: false });
-      this.emitter.emit('exitpip');
-      this.eventHooks.execute('exitpip');
+      // State will be updated by leavepictureinpicture event listener
+    }
+  }
+
+  async togglePiP(): Promise<void> {
+    if (isPiP()) {
+      await this.exitPiP();
+    } else {
+      await this.enterPiP();
     }
   }
 

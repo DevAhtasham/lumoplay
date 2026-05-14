@@ -84,6 +84,7 @@ export interface PlayerAPI {
   toggleFullscreen(): Promise<void>;
   enterPiP(): Promise<void>;
   exitPiP(): Promise<void>;
+  togglePiP(): Promise<void>;
   enterTheatricalMode(): void;
   exitTheatricalMode(): void;
   isPlaying(): boolean;

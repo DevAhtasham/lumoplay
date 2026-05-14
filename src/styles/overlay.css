@@ -94,6 +94,43 @@
   pointer-events: none;
 }
 
+/* Center Play Button */
+.lumoplay-center-play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 56px;
+  height: 56px;
+  background: var(--lumoplay-primary);
+  border: none;
+  border-radius: var(--lumoplay-radius-full);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--lumoplay-transition-normal);
+  z-index: var(--lumoplay-z-overlay);
+  pointer-events: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.lumoplay-center-play-button:hover {
+  background: var(--lumoplay-secondary);
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.lumoplay-center-play-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: #000;
+}
+
+.lumoplay-center-play-button.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Tooltip */
 .lumoplay-tooltip {
   position: absolute;

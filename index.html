@@ -49,21 +49,138 @@
   <script type="module">
     import { LumoPlayer } from './src/index.ts';
 
-    // Initialize player with thumbnail support
+    /**
+     * VideoFrameCapture - captures actual frames from the video source
+     * Uses a hidden <video> + <canvas> to extract real frame images
+     */
+    class VideoFrameCapture {
+      constructor(videoSrc, interval = 2) {
+        this.interval = interval;
+        this.frameCache = new Map();
+        this.pendingCaptures = new Set();
+
+        this.video = document.createElement('video');
+        this.video.src = videoSrc;
+        this.video.crossOrigin = 'anonymous';
+        this.video.muted = true;
+        this.video.preload = 'metadata';
+        this.video.style.cssText = 'position:absolute;visibility:hidden;width:1px;height:1px;';
+        document.body.appendChild(this.video);
+
+        this.canvas = document.createElement('canvas');
+        this.canvas.width = 160;
+        this.canvas.height = 90;
+        this.ctx = this.canvas.getContext('2d');
+
+        this.ready = false;
+        this.capturing = false;
+
+        this.video.addEventListener('loadedmetadata', () => {
+          this.ready = true;
+          this.duration = this.video.duration;
+          this.precaptureAll();
+        });
+      }
+
+      captureAt(time) {
+        const bucket = Math.round(time / this.interval) * this.interval;
+        const key = bucket.toFixed(1);
+
+        if (this.frameCache.has(key)) {
+          return Promise.resolve(this.frameCache.get(key));
+        }
+
+        if (this.pendingCaptures.has(key)) {
+          return new Promise(resolve => {
+            const check = setInterval(() => {
+              if (this.frameCache.has(key)) {
+                clearInterval(check);
+                resolve(this.frameCache.get(key));
+              }
+            }, 50);
+          });
+        }
+
+        return this._captureFrame(key, bucket);
+      }
+
+      _captureFrame(key, time) {
+        this.pendingCaptures.add(key);
+        return new Promise((resolve) => {
+          const clampedTime = Math.max(0, Math.min(time, this.duration || 9999));
+          this.video.currentTime = clampedTime;
+
+          const onSeeked = () => {
+            this.video.removeEventListener('seeked', onSeeked);
+            try {
+              this.ctx.drawImage(this.video, 0, 0, 160, 90);
+              const dataUrl = this.canvas.toDataURL('image/jpeg', 0.7);
+              this.frameCache.set(key, dataUrl);
+            } catch (e) {
+              this.frameCache.set(key, null);
+            }
+            this.pendingCaptures.delete(key);
+            resolve(this.frameCache.get(key));
+          };
+          this.video.addEventListener('seeked', onSeeked, { once: true });
+        });
+      }
+
+      async precaptureAll() {
+        if (!this.ready || this.capturing) return;
+        this.capturing = true;
+        const totalFrames = Math.ceil(this.duration / this.interval);
+        for (let i = 0; i <= totalFrames; i++) {
+          const t = i * this.interval;
+          const key = t.toFixed(1);
+          if (!this.frameCache.has(key)) {
+            await this._captureFrame(key, t);
+          }
+        }
+        this.capturing = false;
+        console.log(`[LumoPlay] Captured ${this.frameCache.size} thumbnail frames`);
+      }
+
+      destroy() {
+        this.video.remove();
+        this.frameCache.clear();
+      }
+    }
+
+    // Initialize frame capture
+    const VIDEO_SRC = '../trailer.webm';
+    let frameCapture = new VideoFrameCapture(VIDEO_SRC, 2);
+
+    async function getThumbnailUrl(time) {
+      return await frameCapture.captureAt(time);
+    }
+
+    // Initialize player
     const player = new LumoPlayer('#player', {
-      src: 'https://media.w3.org/2010/05/sintel/trailer.mp4',
-      poster: 'https://media.w3.org/2010/05/sintel/poster.png',
+      src: VIDEO_SRC,
+      poster: '',
       autoplay: false,
       muted: false,
       controls: true,
       theme: 'dark',
       autoHideDelay: 3000,
-      thumbnails: {
-        enabled: true,
-        type: 'webvtt',
-        source: './examples/thumbnails.vtt'
-      }
     });
+
+    // Enable thumbnails on progress bar
+    const progressBar = player.getProgressBar();
+    if (progressBar) {
+      progressBar.enableThumbnails();
+      console.log('Thumbnails enabled');
+
+      // Listen for thumbnail requests
+      progressBar.getElement().addEventListener('thumbnailRequest', async (e) => {
+        const { time, x, y } = e.detail;
+        const thumbnailUrl = await getThumbnailUrl(time);
+        if (thumbnailUrl) {
+          progressBar.showThumbnailPreview(thumbnailUrl, { x, y });
+        }
+      });
+    }
 
     // Event listeners
     player.on('play', () => console.log('Video started playing'));
@@ -71,15 +188,6 @@
     player.on('ended', () => console.log('Video ended'));
     player.on('seek', ({ time }) => console.log('Seeked to', time));
     player.on('timeupdate', ({ time }) => console.log('Current time:', time));
-
-    // Thumbnail events
-    player.on('thumbnailHover', ({ time, thumbnail }) => {
-      console.log('Thumbnail hover at time:', time, 'thumbnail:', thumbnail);
-    });
-
-    player.on('thumbnailLoad', ({ success, count }) => {
-      console.log('Thumbnails loaded:', success, 'count:', count);
-    });
   </script>
 </body>
 </html>

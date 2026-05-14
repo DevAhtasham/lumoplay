@@ -56,3 +56,55 @@ export class Overlay {
     this.overlay.remove();
   }
 }
+
+export class CenterPlayButton {
+  private container: HTMLElement;
+  private button: HTMLButtonElement;
+  private icon: HTMLElement;
+  private onToggle: () => void;
+
+  constructor(playerContainer: HTMLElement, onToggle: () => void) {
+    this.container = playerContainer;
+    this.onToggle = onToggle;
+
+    this.button = createElement<HTMLButtonElement>('button', ['lumoplay-center-play-button']);
+    this.button.setAttribute('aria-label', 'Play');
+    
+    this.icon = createElement('div', ['lumoplay-center-play-icon']);
+    this.icon.innerHTML = `
+      <svg viewBox="0 0 24 24">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+    `;
+    
+    this.button.appendChild(this.icon);
+    this.button.addEventListener('click', () => this.onToggle());
+    
+    this.container.appendChild(this.button);
+  }
+
+  updateState(isPlaying: boolean): void {
+    if (isPlaying) {
+      this.button.classList.add('hidden');
+      this.button.setAttribute('aria-label', 'Pause');
+    } else {
+      this.button.classList.remove('hidden');
+      this.button.setAttribute('aria-label', 'Play');
+    }
+
+    // Update icon - always show play icon when visible
+    this.icon.innerHTML = `
+      <svg viewBox="0 0 24 24">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+    `;
+  }
+
+  getElement(): HTMLElement {
+    return this.button;
+  }
+
+  destroy(): void {
+    this.button.remove();
+  }
+}
