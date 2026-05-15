@@ -1,141 +1,15 @@
 import { PlayButton } from './controls/play-button';
 import { VolumeControl } from './controls/volume-control';
 import { ProgressBar } from './controls/progress-bar';
-import { FullscreenButton } from './controls/fullscreen-button';
 import { TimeDisplay } from './controls/time-display';
+import { FullscreenButton } from './controls/fullscreen-button';
+import { SettingsButton } from './controls/settings-button';
 import { PipButton } from './controls/pip-button';
-import { ThemeManager } from './theme-manager';
+import { SeekButtons } from './controls/seek-buttons';
+import { AudioTrackButton } from './controls/audio-track-button';
 import { CenterPlayButton } from './overlay';
+import { ThemeManager } from './theme-manager';
 import { createElement } from '../utils/dom';
-
-export class SeekButtons {
-  private container: HTMLElement;
-  private rewindButton: HTMLButtonElement;
-  private forwardButton: HTMLButtonElement;
-
-  constructor(onRewind: () => void, onForward: () => void) {
-    this.container = createElement('div', ['lumoplay-seek-buttons']);
-    
-    this.rewindButton = createElement<HTMLButtonElement>('button', ['lumoplay-control', 'lumoplay-rewind']);
-    this.rewindButton.innerHTML = `
-      <svg viewBox="0 0 24 24">
-        <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/>
-      </svg>
-    `;
-    this.rewindButton.setAttribute('aria-label', 'Rewind 10 seconds');
-    this.rewindButton.addEventListener('click', onRewind);
-    
-    this.forwardButton = createElement<HTMLButtonElement>('button', ['lumoplay-control', 'lumoplay-forward']);
-    this.forwardButton.innerHTML = `
-      <svg viewBox="0 0 24 24">
-        <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/>
-      </svg>
-    `;
-    this.forwardButton.setAttribute('aria-label', 'Forward 10 seconds');
-    this.forwardButton.addEventListener('click', onForward);
-    
-    this.container.appendChild(this.rewindButton);
-    this.container.appendChild(this.forwardButton);
-  }
-
-  getElement(): HTMLElement {
-    return this.container;
-  }
-
-  destroy(): void {
-    this.container.remove();
-  }
-}
-
-export class SettingsButton {
-  private container: HTMLElement;
-  private button: HTMLButtonElement;
-
-  constructor(onSettingsClick: () => void) {
-    this.container = createElement('div', ['lumoplay-settings-button']);
-    
-    this.button = createElement<HTMLButtonElement>('button', ['lumoplay-control', 'lumoplay-settings-toggle']);
-    this.button.innerHTML = `
-      <svg viewBox="0 0 24 24">
-        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.04.17 0 .36.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.04-.22 0-.45-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
-      </svg>
-    `;
-    this.button.setAttribute('aria-label', 'Settings');
-    this.button.addEventListener('click', onSettingsClick);
-    
-    this.container.appendChild(this.button);
-  }
-
-  getElement(): HTMLElement {
-    return this.container;
-  }
-
-  destroy(): void {
-    this.container.remove();
-  }
-}
-
-export class AudioTrackControl {
-  private container: HTMLElement;
-  private button: HTMLButtonElement;
-  private menu: HTMLElement;
-  private onTrackChange: (trackId: string) => void;
-
-  constructor(onTrackChange: (trackId: string) => void) {
-    this.onTrackChange = onTrackChange;
-    this.container = createElement('div', ['lumoplay-audio-control']);
-    
-    this.button = createElement<HTMLButtonElement>('button', ['lumoplay-control', 'lumoplay-audio-button']);
-    this.button.innerHTML = `
-      <svg viewBox="0 0 24 24">
-        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-      </svg>
-    `;
-    this.button.setAttribute('aria-label', 'Audio tracks');
-    this.button.addEventListener('click', () => this.toggleMenu());
-    
-    this.menu = createElement('div', ['lumoplay-audio-menu', 'hidden']);
-    
-    this.container.appendChild(this.button);
-    this.container.appendChild(this.menu);
-  }
-
-  private toggleMenu(): void {
-    this.menu.classList.toggle('hidden');
-  }
-
-  setTracks(tracks: any[]): void {
-    this.menu.innerHTML = '';
-    if (tracks.length === 0) {
-      const noTracks = createElement('div', ['lumoplay-audio-item']);
-      noTracks.textContent = 'No audio tracks';
-      this.menu.appendChild(noTracks);
-      return;
-    }
-
-    tracks.forEach(track => {
-      const item = createElement('div', ['lumoplay-audio-item']);
-      if (track.enabled) {
-        item.classList.add('active');
-      }
-      item.textContent = track.label || track.language || 'Track';
-      item.addEventListener('click', () => {
-        this.onTrackChange(track.id);
-        this.toggleMenu();
-      });
-      this.menu.appendChild(item);
-    });
-  }
-
-  getElement(): HTMLElement {
-    return this.container;
-  }
-
-  destroy(): void {
-    this.container.remove();
-  }
-}
 
 export class Renderer {
   private container: HTMLElement;
@@ -148,6 +22,7 @@ export class Renderer {
   private seekButtons: SeekButtons;
   private settingsButton: SettingsButton;
   private pipButton: PipButton;
+  private audioTrackButton: AudioTrackButton;
   private centerPlayButton: CenterPlayButton;
   private themeManager: ThemeManager;
   private player: any;
@@ -179,7 +54,7 @@ export class Renderer {
       (volume) => player.setVolume(volume)
     );
     this.progressBar = new ProgressBar((time) => player.seek(time));
-    this.fullscreenButton = new FullscreenButton(() => player.toggleFullscreen());
+    this.fullscreenButton = new FullscreenButton(() => player.toggleFullscreen(), container);
     this.timeDisplay = new TimeDisplay();
     this.seekButtons = new SeekButtons(
       () => player.rewind(10),
@@ -190,6 +65,9 @@ export class Renderer {
     });
     this.pipButton = new PipButton(() => {
       player.togglePiP().catch(console.error);
+    });
+    this.audioTrackButton = new AudioTrackButton((trackId) => {
+      player.setAudioTrack(trackId);
     });
     this.centerPlayButton = new CenterPlayButton(container, () => {
       if (player.isPlaying()) {
@@ -228,6 +106,24 @@ export class Renderer {
     this.controlsContainer.appendChild(this.volumeControl.getElement());
     this.controlsContainer.appendChild(this.progressBar.getElement());
     this.controlsContainer.appendChild(this.timeDisplay.getElement());
+
+    // Add logo
+    const logoElement = document.createElement('img');
+    logoElement.src = '/assets/images/lumoplay.png';
+    logoElement.alt = 'LumoPlay';
+    logoElement.className = 'lumoplay-logo';
+    
+    // Prevent drag and right-click
+    logoElement.addEventListener('dragstart', (e) => e.preventDefault());
+    logoElement.addEventListener('contextmenu', (e) => e.preventDefault());
+    logoElement.addEventListener('mousedown', (e) => e.preventDefault());
+    
+    this.controlsContainer.appendChild(logoElement);
+
+    // Add audio track button and dropdown
+    this.controlsContainer.appendChild(this.audioTrackButton.getElement());
+    this.controlsContainer.appendChild(this.audioTrackButton.getDropdown());
+
     this.controlsContainer.appendChild(this.settingsButton.getElement());
     this.controlsContainer.appendChild(this.pipButton.getElement());
     this.controlsContainer.appendChild(this.fullscreenButton.getElement());
@@ -302,14 +198,29 @@ export class Renderer {
     this.themeManager.applyTheme(theme, customConfig);
   }
 
+  updateFullscreenButton(): void {
+    this.fullscreenButton.update(this.container);
+  }
+
+  updateAudioTracks(tracks: any[]): void {
+    this.audioTrackButton.setTracks(tracks);
+  }
+
+  setCurrentAudioTrack(trackId: string): void {
+    this.audioTrackButton.setCurrentTrack(trackId);
+  }
+
   destroy(): void {
-    if (this.hideTimeout) {
-      clearTimeout(this.hideTimeout);
-    }
     this.playButton.destroy();
     this.volumeControl.destroy();
-    this.fullscreenButton.destroy();
+    this.progressBar.destroy();
     this.timeDisplay.destroy();
+    this.seekButtons.destroy();
+    this.settingsButton.destroy();
+    this.pipButton.destroy();
+    this.audioTrackButton.destroy();
+    this.fullscreenButton.destroy();
+    this.centerPlayButton.destroy();
     this.controlsContainer.remove();
     this.themeManager.destroy();
   }

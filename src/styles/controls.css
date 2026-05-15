@@ -63,6 +63,11 @@
   fill: currentColor;
 }
 
+.lumoplay-exit-icon {
+  width: var(--lumoplay-icon-size);
+  height: var(--lumoplay-icon-size);
+}
+
 .lumoplay-speed-control {
   font-size: 12px;
   font-weight: 600;
@@ -323,6 +328,94 @@
   opacity: 1;
 }
 
+/* Audio Track Button */
+.lumoplay-audio-track {
+  position: relative;
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--lumoplay-text);
+  transition: color 0.2s ease;
+}
+
+.lumoplay-audio-track:hover {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.lumoplay-audio-track svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.lumoplay-audio-track-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--lumoplay-background);
+  border: 1px solid var(--lumoplay-border);
+  border-radius: var(--lumoplay-radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.lumoplay-audio-track-option {
+  padding: 10px 15px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.lumoplay-audio-track-option:hover {
+  background: var(--lumoplay-hover);
+}
+
+.lumoplay-audio-track-option.selected {
+  background: var(--lumoplay-primary);
+  color: white;
+}
+
+.lumoplay-audio-track-label {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.lumoplay-audio-track-language {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.lumoplay-audio-track-no-tracks {
+  padding: 15px;
+  text-align: center;
+  color: var(--lumoplay-text-secondary);
+  font-size: 14px;
+}
+
+/* Logo */
+.lumoplay-logo {
+  height: 24px;
+  width: auto;
+  max-width: 80px;
+  margin-left: 10px;
+  margin-right: 10px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
 /* Time Display */
 .lumoplay-time {
   display: flex;
@@ -332,7 +425,6 @@
   color: var(--lumoplay-text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-variant-numeric: tabular-nums;
-  min-width: 100px;
 }
 
 .lumoplay-time-separator {

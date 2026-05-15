@@ -213,6 +213,11 @@ export class LumoPlayer implements PlayerAPI {
           e.preventDefault();
           this.toggleFullscreen();
           break;
+        case 't':
+        case 'T':
+          e.preventDefault();
+          this.toggleTheaterMode();
+          break;
       }
     });
   }
@@ -457,6 +462,9 @@ export class LumoPlayer implements PlayerAPI {
   setAudioTrack(trackId: string): void {
     this.videoWrapper.setAudioTrack(trackId);
     this.emitter.emit('audiotrackchange', { trackId });
+    if (this.renderer) {
+      this.renderer.setCurrentAudioTrack(trackId);
+    }
   }
 
   enterMiniPlayer(): void {
@@ -483,12 +491,14 @@ export class LumoPlayer implements PlayerAPI {
     this.container.classList.add('lumoplay-theatrical');
     this.stateManager.setState({ isTheatrical: true });
     this.emitter.emit('entertheater');
+    this.renderer?.updateFullscreenButton();
   }
 
   exitTheaterMode(): void {
     this.container.classList.remove('lumoplay-theatrical');
     this.stateManager.setState({ isTheatrical: false });
     this.emitter.emit('exittheater');
+    this.renderer?.updateFullscreenButton();
   }
 
   toggleTheaterMode(): void {
